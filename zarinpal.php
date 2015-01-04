@@ -2161,12 +2161,13 @@ class GFZarinPal {
 			</h3>
 			<div class="inside">
 			<div class="margin_vertical_10">
+
+                        <div id="zarinpal_customer_fields">
                         <?php
-						$form = RGFormsModel::get_form_meta(absint($current_form->id));
                             if(!empty($form))
                                 echo self::get_customer_information($form, $config);
                         ?>
-				   <br/>
+				  </div> <br/>
 					<label for="gf_zarinpal_desc_pm">اضافه کردن دستی توضیح</label>
 						<input type="text" name="gf_zarinpal_desc_pm" id="gf_zarinpal_desc_pm" class="width-1" value="<?php echo rgars($config, "meta/desc_pm") ?>" style="max-width:198px !important;"/>
                 </div>
