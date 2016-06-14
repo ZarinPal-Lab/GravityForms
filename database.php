@@ -1,12 +1,12 @@
 <?php
 if (!defined( 'ABSPATH' )) exit;
 
-class GFZarinPalData{
+class GFZarinGateData{
 
     public static function update_table(){
         global $wpdb;
 
-        $table_name = self::get_zarinpal_table_name();
+        $table_name = self::get_zaringate_table_name();
 
         if ( ! empty($wpdb->charset) )
             $charset_collate = "DEFAULT CHARACTER SET $wpdb->charset";
@@ -28,14 +28,14 @@ class GFZarinPalData{
         dbDelta($feed);
     }
 
-	public static function get_zarinpal_table_name(){
+	public static function get_zaringate_table_name(){
         global $wpdb;
-        return $wpdb->prefix . "rg_zarinpal";
+        return $wpdb->prefix . "rg_zaringate";
     }
     
 	public static function drop_tables(){
         global $wpdb;
-        $wpdb->query("DROP TABLE IF EXISTS " . self::get_zarinpal_table_name());
+        $wpdb->query("DROP TABLE IF EXISTS " . self::get_zaringate_table_name());
     }
 	
 	public static function get_available_forms(){
@@ -49,7 +49,7 @@ class GFZarinPalData{
 	
 	public static function get_feed($id){
         global $wpdb;
-        $table_name = self::get_zarinpal_table_name();
+        $table_name = self::get_zaringate_table_name();
         $sql = $wpdb->prepare("SELECT id, form_id, is_active, meta FROM $table_name WHERE id=%d", $id);
         $results = $wpdb->get_results($sql, ARRAY_A);
         if(empty($results))
@@ -61,7 +61,7 @@ class GFZarinPalData{
 	
     public static function get_feeds(){
         global $wpdb;
-        $table_name = self::get_zarinpal_table_name();
+        $table_name = self::get_zaringate_table_name();
         $form_table_name = RGFormsModel::get_form_table_name();
         $sql = "SELECT s.id, s.is_active, s.form_id, s.meta, f.title as form_title
                 FROM $table_name s
@@ -76,7 +76,7 @@ class GFZarinPalData{
 	
 	public static function get_feed_by_form($form_id, $only_active = false){
         global $wpdb;
-        $table_name = self::get_zarinpal_table_name();
+        $table_name = self::get_zaringate_table_name();
         $active_clause = $only_active ? " AND is_active=1" : "";
         $sql = $wpdb->prepare("SELECT id, form_id, is_active, meta FROM $table_name WHERE form_id=%d $active_clause", $form_id);
         $results = $wpdb->get_results($sql, ARRAY_A);
@@ -91,7 +91,7 @@ class GFZarinPalData{
 	
 	public static function update_feed($id, $form_id, $is_active, $setting){
         global $wpdb;
-        $table_name = self::get_zarinpal_table_name();
+        $table_name = self::get_zaringate_table_name();
         $setting = maybe_serialize($setting);
         if($id == 0){
             $wpdb->insert($table_name, array("form_id" => $form_id, "is_active"=> $is_active, "meta" => $setting), array("%d", "%d", "%s"));
@@ -105,18 +105,18 @@ class GFZarinPalData{
     
 	public static function delete_feed($id){
         global $wpdb;
-        $table_name = self::get_zarinpal_table_name();
+        $table_name = self::get_zaringate_table_name();
         $wpdb->query($wpdb->prepare("DELETE FROM $table_name WHERE id=%s", $id));
     }
 	
-	//----جمع پرداخت های  زرین پال این فرم----------
+	//----جمع پرداخت های  زرین گیت این فرم----------
 	public static function get_transaction_totals($form_id){
         global $wpdb;
         $lead_table_name = RGFormsModel::get_lead_table_name();
         $sql = $wpdb->prepare(" SELECT l.status, sum(l.payment_amount) revenue, count(l.id) transactions
                                  FROM {$lead_table_name} l
                                  WHERE l.form_id=%d AND l.status=%s AND l.is_fulfilled=%d AND l.payment_method=%s
-                                 GROUP BY l.status", $form_id, 'active', 1, 'zarinpal' );
+                                 GROUP BY l.status", $form_id, 'active', 1, 'zaringate' );
         $results = $wpdb->get_results($sql, ARRAY_A);
         $totals = array();
         if(is_array($results)){
@@ -127,14 +127,14 @@ class GFZarinPalData{
         return $totals;
     }
 
-	//-----جمع پرداخت های  همه فرمهای زرین پال-----------
-	public static function get_transaction_totals_zarinpal(){
+	//-----جمع پرداخت های  همه فرمهای زرین گیت-----------
+	public static function get_transaction_totals_zaringate(){
         global $wpdb;
         $lead_table_name = RGFormsModel::get_lead_table_name();
         $sql = $wpdb->prepare(" SELECT l.status, sum(l.payment_amount) revenue, count(l.id) transactions
                                  FROM {$lead_table_name} l
                                  WHERE l.status=%s AND l.is_fulfilled=%d AND l.payment_method=%s
-                                 GROUP BY l.status",'active', 1, 'zarinpal');
+                                 GROUP BY l.status",'active', 1, 'zaringate');
         $results = $wpdb->get_results($sql, ARRAY_A);
         $totals = array();
         if(is_array($results)){
