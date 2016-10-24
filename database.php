@@ -1,16 +1,18 @@
 <?php
-if (!defined( 'ABSPATH' )) exit;
+if (!defined('ABSPATH')) exit;
 
-class GFZarinPalData{
+class GFZarinPalData
+{
 
-    public static function update_table(){
+    public static function update_table()
+    {
         global $wpdb;
 
         $table_name = self::get_zarinpal_table_name();
 
-        if ( ! empty($wpdb->charset) )
+        if (!empty($wpdb->charset))
             $charset_collate = "DEFAULT CHARACTER SET $wpdb->charset";
-        if ( ! empty($wpdb->collate) )
+        if (!empty($wpdb->collate))
             $charset_collate .= " COLLATE $wpdb->collate";
 
 
@@ -28,38 +30,43 @@ class GFZarinPalData{
         dbDelta($feed);
     }
 
-	public static function get_zarinpal_table_name(){
+    public static function get_zarinpal_table_name()
+    {
         global $wpdb;
         return $wpdb->prefix . "rg_zarinpal";
     }
-    
-	public static function drop_tables(){
+
+    public static function drop_tables()
+    {
         global $wpdb;
         $wpdb->query("DROP TABLE IF EXISTS " . self::get_zarinpal_table_name());
     }
-	
-	public static function get_available_forms(){
+
+    public static function get_available_forms()
+    {
         $forms = RGFormsModel::get_forms();
         $available_forms = array();
-        foreach($forms as $form) {
+        foreach ($forms as $form) {
             $available_forms[] = $form;
         }
         return $available_forms;
     }
-	
-	public static function get_feed($id){
+
+    public static function get_feed($id)
+    {
         global $wpdb;
         $table_name = self::get_zarinpal_table_name();
         $sql = $wpdb->prepare("SELECT id, form_id, is_active, meta FROM $table_name WHERE id=%d", $id);
         $results = $wpdb->get_results($sql, ARRAY_A);
-        if(empty($results))
+        if (empty($results))
             return array();
         $result = $results[0];
         $result["meta"] = maybe_unserialize($result["meta"]);
         return $result;
     }
-	
-    public static function get_feeds(){
+
+    public static function get_feeds()
+    {
         global $wpdb;
         $table_name = self::get_zarinpal_table_name();
         $form_table_name = RGFormsModel::get_form_table_name();
@@ -68,85 +75,90 @@ class GFZarinPalData{
                 INNER JOIN $form_table_name f ON s.form_id = f.id";
         $results = $wpdb->get_results($sql, ARRAY_A);
         $count = sizeof($results);
-        for($i=0; $i<$count; $i++){
+        for ($i = 0; $i < $count; $i++) {
             $results[$i]["meta"] = maybe_unserialize($results[$i]["meta"]);
         }
         return $results;
     }
-	
-	public static function get_feed_by_form($form_id, $only_active = false){
+
+    public static function get_feed_by_form($form_id, $only_active = false)
+    {
         global $wpdb;
         $table_name = self::get_zarinpal_table_name();
         $active_clause = $only_active ? " AND is_active=1" : "";
         $sql = $wpdb->prepare("SELECT id, form_id, is_active, meta FROM $table_name WHERE form_id=%d $active_clause", $form_id);
         $results = $wpdb->get_results($sql, ARRAY_A);
-        if(empty($results))
+        if (empty($results))
             return array();
         $count = sizeof($results);
-        for($i=0; $i<$count; $i++){
+        for ($i = 0; $i < $count; $i++) {
             $results[$i]["meta"] = maybe_unserialize($results[$i]["meta"]);
         }
         return $results;
     }
-	
-	public static function update_feed($id, $form_id, $is_active, $setting){
+
+    public static function update_feed($id, $form_id, $is_active, $setting)
+    {
         global $wpdb;
         $table_name = self::get_zarinpal_table_name();
         $setting = maybe_serialize($setting);
-        if($id == 0){
-            $wpdb->insert($table_name, array("form_id" => $form_id, "is_active"=> $is_active, "meta" => $setting), array("%d", "%d", "%s"));
+        if ($id == 0) {
+            $wpdb->insert($table_name, array("form_id" => $form_id, "is_active" => $is_active, "meta" => $setting), array("%d", "%d", "%s"));
             $id = $wpdb->get_var("SELECT LAST_INSERT_ID()");
-        }
-        else{
-            $wpdb->update($table_name, array("form_id" => $form_id, "is_active"=> $is_active, "meta" => $setting), array("id" => $id), array("%d", "%d", "%s"), array("%d"));
+        } else {
+            $wpdb->update($table_name, array("form_id" => $form_id, "is_active" => $is_active, "meta" => $setting), array("id" => $id), array("%d", "%d", "%s"), array("%d"));
         }
         return $id;
     }
-    
-	public static function delete_feed($id){
+
+    public static function delete_feed($id)
+    {
         global $wpdb;
         $table_name = self::get_zarinpal_table_name();
         $wpdb->query($wpdb->prepare("DELETE FROM $table_name WHERE id=%s", $id));
     }
-	
-	//----جمع پرداخت های  زرین پال این فرم----------
-	public static function get_transaction_totals($form_id){
+
+    //----جمع پرداخت های  زرین پال این فرم----------
+    public static function get_transaction_totals($form_id)
+    {
         global $wpdb;
         $lead_table_name = RGFormsModel::get_lead_table_name();
         $sql = $wpdb->prepare(" SELECT l.status, sum(l.payment_amount) revenue, count(l.id) transactions
                                  FROM {$lead_table_name} l
                                  WHERE l.form_id=%d AND l.status=%s AND l.is_fulfilled=%d AND l.payment_method=%s
-                                 GROUP BY l.status", $form_id, 'active', 1, 'zarinpal' );
+                                 GROUP BY l.status", $form_id, 'active', 1, 'zarinpal');
         $results = $wpdb->get_results($sql, ARRAY_A);
         $totals = array();
-        if(is_array($results)){
-            foreach($results as $result){
-                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"] , "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
+        if (is_array($results)) {
+            foreach ($results as $result) {
+                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"], "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
             }
         }
         return $totals;
     }
 
-	//-----جمع پرداخت های  همه فرمهای زرین پال-----------
-	public static function get_transaction_totals_zarinpal(){
+    //-----جمع پرداخت های  همه فرمهای زرین پال-----------
+    public static function get_transaction_totals_zarinpal()
+    {
         global $wpdb;
         $lead_table_name = RGFormsModel::get_lead_table_name();
         $sql = $wpdb->prepare(" SELECT l.status, sum(l.payment_amount) revenue, count(l.id) transactions
                                  FROM {$lead_table_name} l
                                  WHERE l.status=%s AND l.is_fulfilled=%d AND l.payment_method=%s
-                                 GROUP BY l.status",'active', 1, 'zarinpal');
+                                 GROUP BY l.status", 'active', 1, 'zarinpal');
         $results = $wpdb->get_results($sql, ARRAY_A);
         $totals = array();
-        if(is_array($results)){
-            foreach($results as $result){
-                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"] , "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
+        if (is_array($results)) {
+            foreach ($results as $result) {
+                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"], "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
             }
         }
         return $totals;
     }
-	
-	//-----جمع پرداخت های  همه روشهای این فرم---------------
-	public static function get_transaction_totals_gateways($form_id){
+
+    //-----جمع پرداخت های  همه روشهای این فرم---------------
+    public static function get_transaction_totals_gateways($form_id)
+    {
         global $wpdb;
         $lead_table_name = RGFormsModel::get_lead_table_name();
         $sql = $wpdb->prepare(" SELECT l.status, sum(l.payment_amount) revenue, count(l.id) transactions
@@ -155,30 +167,31 @@ class GFZarinPalData{
                                  GROUP BY l.status", $form_id, 'active', 1);
         $results = $wpdb->get_results($sql, ARRAY_A);
         $totals = array();
-        if(is_array($results)){
-            foreach($results as $result){
-                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"] , "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
+        if (is_array($results)) {
+            foreach ($results as $result) {
+                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"], "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
             }
         }
         return $totals;
     }
-	
-	//-----جمع کل پرداخت های همه فرمهای سایت-------------
-	public static function get_transaction_totals_site(){
+
+    //-----جمع کل پرداخت های همه فرمهای سایت-------------
+    public static function get_transaction_totals_site()
+    {
         global $wpdb;
         $lead_table_name = RGFormsModel::get_lead_table_name();
         $sql = $wpdb->prepare(" SELECT l.status, sum(l.payment_amount) revenue, count(l.id) transactions
                                  FROM {$lead_table_name} l
                                  WHERE l.status=%s AND l.is_fulfilled=%d
-                                 GROUP BY l.status", 'active' ,1 );
+                                 GROUP BY l.status", 'active', 1);
         $results = $wpdb->get_results($sql, ARRAY_A);
         $totals = array();
-        if(is_array($results)){
-            foreach($results as $result){
-                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"] , "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
+        if (is_array($results)) {
+            foreach ($results as $result) {
+                $totals[$result["status"]] = array("revenue" => empty($result["revenue"]) ? 0 : $result["revenue"], "transactions" => empty($result["transactions"]) ? 0 : $result["transactions"]);
             }
         }
         return $totals;
     }
-	
+
 }
