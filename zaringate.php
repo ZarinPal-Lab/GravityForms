@@ -14,24 +14,24 @@ class GFZarinGate_HANNANStd
     public static $author = "HANNANStd";
 
     // ------------------------GravityForms.IR-------------------------
-    private static $version = "2.2.0";
-    private static $min_gravityforms_version = "1.9.15";
+    private static $version = "2.2.1";
+    private static $min_gravityforms_version = "1.9.10";
     private static $config = null;
 
     // ------------------------GravityForms.IR-------------------------
     public static function init()
     {
+		if (!class_exists("GFParsi")) {
+			add_action('admin_notices', array('GFZarinGate_HANNANStd', 'admin_notice_persian_gf'));
+			return false;
+		}
+
+		if (!self::is_gravityforms_supported()) {
+			add_action('admin_notices', array('GFZarinGate_HANNANStd', 'admin_notice_gf_support'));
+			return false;
+		}
+
         if (is_admin() && self::has_access()) {
-
-            if (!class_exists("GFParsi")) {
-                add_action('admin_notices', array('GFZarinGate_HANNANStd', 'admin_notice_persian_gf'));
-                return false;
-            }
-
-            if (!self::is_gravityforms_supported()) {
-                add_action('admin_notices', array('GFZarinGate_HANNANStd', 'admin_notice_gf_support'));
-                return false;
-            }
 
             if (function_exists('members_get_capabilities'))
                 add_filter('members_get_capabilities', array("GFZarinGate_HANNANStd", "members_get_capabilities"));
@@ -852,7 +852,7 @@ class GFZarinGate_HANNANStd
                                 <th scope="row" class="check-column"><input type="checkbox" name="feed[]"
                                                                             value="<?php echo $setting["id"] ?>"/></th>
 
-                                <td><img style="cursor:pointer;"
+                                <td><img style="cursor:pointer;width:25px"
                                          src="<?php echo esc_url(GFCommon::get_base_url()) ?>/images/active<?php echo intval($setting["is_active"]) ?>.png"
                                          alt="<?php echo $setting["is_active"] ? __("درگاه فعال است", "gravityformszaringate") : __("درگاه غیر فعال است", "gravityformszaringate"); ?>"
                                          title="<?php echo $setting["is_active"] ? __("درگاه فعال است", "gravityformszaringate") : __("درگاه غیر فعال است", "gravityformszaringate"); ?>"
